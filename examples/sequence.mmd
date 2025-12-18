@@ -1,0 +1,39 @@
+sequenceDiagram
+    autonumber
+    participant 用户
+    participant 前端系统
+    participant 后端API
+    participant 数据库
+    participant 消息队列
+    
+    用户->>前端系统: 1. 提交订单请求
+    activate 前端系统
+    
+    前端系统->>后端API: 2. 发送订单数据
+    activate 后端API
+    
+    后端API->>后端API: 3. 数据验证
+    
+    alt 验证成功
+        后端API->>数据库: 4. 保存订单
+        activate 数据库
+        数据库-->>后端API: 5. 返回订单ID
+        deactivate 数据库
+        
+        后端API->>消息队列: 6. 发送订单事件
+        activate 消息队列
+        消息队列-->>后端API: 7. 确认接收
+        deactivate 消息队列
+        
+        后端API-->>前端系统: 8. 返回成功响应
+        前端系统-->>用户: 9. 显示成功消息
+    else 验证失败
+        后端API-->>前端系统: 返回错误信息
+        前端系统-->>用户: 显示错误提示
+    end
+    
+    deactivate 后端API
+    deactivate 前端系统
+    
+    Note over 用户,消息队列: 订单处理完成
+

@@ -1,0 +1,25 @@
+{
+  "name": "mermaid-flowchart-generator",
+  "version": "1.0.0",
+  "description": "使用 Mermaid CLI 生成高清流程图",
+  "scripts": {
+    "install-cli": "npm install -g @mermaid-js/mermaid-cli",
+    "generate": "mmdc -i ./examples/flowchart.mmd -o ./output/flowchart.svg -t default -b transparent",
+    "generate-png": "mmdc -i ./examples/flowchart.mmd -o ./output/flowchart.png -t default -b white -w 2048",
+    "generate-pdf": "mmdc -i ./examples/flowchart.mmd -o ./output/flowchart.pdf -t default",
+    "generate-all": "npm run generate && npm run generate-png && npm run generate-pdf",
+    "batch-generate": "node scripts/batch-generate.js"
+  },
+  "keywords": [
+    "mermaid",
+    "flowchart",
+    "diagram",
+    "svg"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@mermaid-js/mermaid-cli": "^11.4.1"
+  }
+}
+

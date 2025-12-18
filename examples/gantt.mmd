@@ -1,0 +1,29 @@
+gantt
+    title 一厂流程管控项目进度表
+    dateFormat YYYY-MM-DD
+    
+    section 需求分析
+    需求调研             :done,    req1, 2025-12-01, 5d
+    需求文档编写         :done,    req2, after req1, 3d
+    需求评审             :done,    req3, after req2, 2d
+    
+    section 设计阶段
+    系统架构设计         :active,  des1, 2025-12-11, 4d
+    数据库设计           :active,  des2, 2025-12-13, 3d
+    接口设计             :         des3, after des2, 2d
+    
+    section 开发阶段
+    前端开发             :         dev1, 2025-12-18, 10d
+    后端开发             :         dev2, 2025-12-18, 12d
+    接口联调             :         dev3, after dev1 dev2, 3d
+    
+    section 测试阶段
+    单元测试             :         test1, after dev1, 5d
+    集成测试             :         test2, after dev3, 4d
+    UAT测试              :         test3, after test2, 3d
+    
+    section 上线部署
+    部署准备             :         dep1, after test3, 2d
+    生产环境部署         :         dep2, after dep1, 1d
+    监控和优化           :         dep3, after dep2, 3d
+

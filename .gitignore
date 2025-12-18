@@ -1,0 +1,29 @@
+# 依赖
+node_modules/
+
+# 输出文件
+output/
+*.svg
+*.png
+*.pdf
+
+# 日志
+*.log
+npm-debug.log*
+
+# 系统文件
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 临时文件
+*.tmp
+*.temp
+
