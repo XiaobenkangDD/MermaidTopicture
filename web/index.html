@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MermaidTopicture · 高清流程图工作室</title>
+  <meta name="description" content="实时预览 Mermaid，一键导出高清 SVG / PNG / PDF" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f8f8a'/%3E%3Cpath d='M18 22h28M18 32h28M18 42h18' stroke='white' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E" />
+</head>
+<body>
+  <div class="atmosphere" aria-hidden="true"></div>
+  <div id="globalToast" class="toast global" hidden></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <div class="brand-text">
+        <h1>MermaidTopicture</h1>
+        <p>高清流程图工作室</p>
+      </div>
+    </div>
+
+    <div class="top-actions">
+      <button type="button" class="ghost-btn" id="btnCopy" title="复制代码">复制</button>
+      <button type="button" class="ghost-btn" id="btnClear" title="清空编辑器">清空</button>
+      <button type="button" class="primary-btn" id="btnExport">导出高清图</button>
+    </div>
+  </header>
+
+  <main class="studio">
+    <section class="panel editor-panel" aria-label="代码编辑">
+      <div class="panel-head">
+        <h2>编辑</h2>
+        <div class="panel-tools">
+          <label class="field-inline">
+            <span>示例</span>
+            <select id="exampleSelect" aria-label="加载示例"></select>
+          </label>
+        </div>
+      </div>
+      <textarea id="codeInput" spellcheck="false" aria-label="Mermaid 源码"></textarea>
+      <div class="status-row">
+        <span id="syntaxStatus" class="status ok">等待输入</span>
+        <span id="charCount" class="muted">0 字符</span>
+      </div>
+    </section>
+
+    <section class="panel preview-panel" aria-label="实时预览">
+      <div class="panel-head">
+        <h2>预览</h2>
+        <div class="panel-tools">
+          <button type="button" class="ghost-btn compact" id="btnZoomOut" aria-label="缩小">−</button>
+          <button type="button" class="ghost-btn compact" id="btnZoomReset" aria-label="重置缩放">100%</button>
+          <button type="button" class="ghost-btn compact" id="btnZoomIn" aria-label="放大">+</button>
+        </div>
+      </div>
+      <div class="preview-stage" id="previewStage">
+        <div id="previewInner" class="preview-inner"></div>
+        <div id="previewEmpty" class="preview-empty">在左侧输入 Mermaid 代码，预览会即时出现</div>
+        <div id="previewError" class="preview-error" hidden></div>
+      </div>
+    </section>
+
+    <aside class="panel controls-panel" aria-label="导出设置">
+      <div class="panel-head">
+        <h2>导出</h2>
+      </div>
+
+      <form id="exportForm" class="controls-form">
+        <label class="field">
+          <span>主题</span>
+          <select id="themeSelect" name="theme">
+            <option value="default">default</option>
+            <option value="forest">forest</option>
+            <option value="dark">dark</option>
+            <option value="neutral">neutral</option>
+            <option value="base">base</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>背景</span>
+          <select id="bgSelect" name="background">
+            <option value="transparent">透明</option>
+            <option value="white">白色</option>
+            <option value="#0B1220">深色</option>
+            <option value="#F4F7FB">浅灰蓝</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>格式</span>
+          <div class="segmented" role="radiogroup" aria-label="导出格式">
+            <label><input type="radio" name="format" value="svg" checked /><span>SVG</span></label>
+            <label><input type="radio" name="format" value="png" /><span>PNG</span></label>
+            <label><input type="radio" name="format" value="pdf" /><span>PDF</span></label>
+          </div>
+        </label>
+
+        <label class="field">
+          <span>尺寸 <em id="sizeLabel">2048</em></span>
+          <input type="range" id="sizeRange" min="1024" max="3840" step="256" value="2048" />
+        </label>
+
+        <label class="field">
+          <span>清晰度缩放 <em id="scaleLabel">2×</em></span>
+          <input type="range" id="scaleRange" min="1" max="3" step="0.5" value="2" />
+        </label>
+
+        <label class="field">
+          <span>文件名</span>
+          <input type="text" id="fileName" value="diagram" maxlength="64" />
+        </label>
+
+        <button type="submit" class="primary-btn full" id="btnExportSide">一键导出到 output/</button>
+      </form>
+
+      <div id="exportToast" class="toast" hidden></div>
+      <p class="hint">预览即时刷新；导出走本地 Mermaid CLI，适合文档与演示。</p>
+    </aside>
+  </main>
+
+  <footer class="foot">
+    <span>本地工作室 · 数据不离开本机</span>
+    <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>S</kbd> 导出 · <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd> 刷新预览
+  </footer>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>

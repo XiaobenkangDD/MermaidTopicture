@@ -1,15 +1,15 @@
-# Mermaid 高清流程图生成器
+# MermaidTopicture
 
-使用 Mermaid CLI 将 `.mmd` 源码导出为高清 **SVG / PNG / PDF**。
+本地 **Web 工作室 + CLI**，把 Mermaid 源码导出为高清 **SVG / PNG / PDF**。
 
 ## 功能特点
 
-- SVG 矢量导出，无损缩放
-- PNG / PDF 高清位图与文档格式
-- 批量并行导出（可配置并发）
+- Web 实时预览：边写边看，语法错误即时提示
+- 一键导出高清图（主题 / 背景 / 尺寸 / 清晰度）
+- 示例一键加载，快捷键导出
+- SVG / PNG / PDF 多格式；批量并行导出
 - 本地 CLI，无需全局安装 `mmdc`
-- 监听模式：改图自动重渲染
-- 内置 Puppeteer 配置，兼容 CI / 容器环境
+- 监听模式与 Puppeteer 配置，兼容 CI / 容器
 
 ## 快速开始
 
@@ -31,16 +31,21 @@ export PUPPETEER_DOWNLOAD_HOST=https://cdn.npmmirror.com/binaries/chrome-for-tes
 npm install
 ```
 
-### 2. 准备 Mermaid 文件
+### 2. 打开 Web 工作室（推荐）
 
-把 `.mmd` 放到 `examples/`，仓库已提供：
+```bash
+npm run studio
+```
 
-- `flowchart.mmd`
-- `sequence.mmd`
-- `gantt.mmd`
-- `class-diagram.mmd`
+浏览器访问 [http://127.0.0.1:5173](http://127.0.0.1:5173)：
 
-### 3. 生成图片
+- 左侧编辑 Mermaid
+- 中间即时预览
+- 右侧设置主题、格式、尺寸后一键导出到 `output/`
+
+快捷键：`Ctrl/⌘ + S` 导出，`Ctrl/⌘ + Enter` 刷新预览。
+
+### 3. 命令行导出
 
 ```bash
 # 单文件：SVG / PNG / PDF
@@ -96,9 +101,11 @@ node scripts/batch-generate.js \
 ## 项目结构
 
 ```
+├── web/                   # Web 工作室前端
 ├── examples/              # Mermaid 源文件
 ├── output/                # 导出结果（gitignore）
 ├── scripts/
+│   ├── studio-server.js   # 本地 Web 服务 + 导出 API
 │   ├── batch-generate.js  # 批量并行导出
 │   ├── generate-one.js    # 单文件导出
 │   └── watch-generate.js  # 监听自动导出
