@@ -1,18 +1,19 @@
 @echo off
 chcp 65001 >nul
+setlocal
+
+:menu
 echo ==========================================
 echo    Mermaid 高清流程图生成器
 echo ==========================================
 echo.
-
-:menu
 echo 请选择操作:
 echo [1] 生成 SVG (矢量格式，推荐)
 echo [2] 生成 PNG (高清位图)
 echo [3] 生成 PDF
 echo [4] 生成所有格式
 echo [5] 批量生成 (处理 examples 目录下所有文件)
-echo [6] 安装 Mermaid CLI
+echo [6] 安装本地依赖
 echo [7] 退出
 echo.
 
@@ -40,7 +41,7 @@ goto menu
 
 :png
 echo.
-echo 正在生成 PNG (2048px 宽度)...
+echo 正在生成 PNG (2048px 宽度, 2x scale)...
 call npm run generate-png
 echo.
 pause
@@ -72,11 +73,11 @@ goto menu
 
 :install
 echo.
-echo 正在安装 Mermaid CLI...
+echo 正在安装本地依赖...
 echo 如果遇到网络问题，请先设置镜像:
 echo set PUPPETEER_DOWNLOAD_HOST=https://cdn.npmmirror.com/binaries/chrome-for-testing
 echo.
-call npm install -g @mermaid-js/mermaid-cli
+call npm install
 echo.
 echo 安装完成！
 pause
@@ -85,5 +86,4 @@ goto menu
 :end
 echo.
 echo 再见！
-exit
-
+exit /b 0

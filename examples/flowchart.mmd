@@ -1,0 +1,32 @@
+graph TD
+    Start([开始]) --> Input[接收业务请求]
+    Input --> Validate{参数校验}
+
+    Validate -->|通过| Route{路由分发}
+    Validate -->|失败| Error[返回错误信息]
+
+    Route -->|查询| Query[查询服务]
+    Route -->|写入| Write[写入服务]
+    Route -->|审批| Approve[审批服务]
+
+    Query --> Cache{命中缓存?}
+    Cache -->|是| RespOK[组装成功响应]
+    Cache -->|否| DB[(数据库)]
+    DB --> RespOK
+
+    Write --> Persist[(持久化)]
+    Persist --> Event[发送领域事件]
+    Event --> RespOK
+
+    Approve --> Review{需要人工审批?}
+    Review -->|是| Human[人工审批节点]
+    Review -->|否| Auto[自动通过]
+    Human --> RespOK
+    Auto --> RespOK
+
+    RespOK --> End([结束])
+    Error --> End
+
+    style Start fill:#4A90E2,stroke:#357ABD,color:#fff
+    style End fill:#52C41A,stroke:#389E0D,color:#fff
+    style Error fill:#FF6B6B,stroke:#CC5555,color:#fff
