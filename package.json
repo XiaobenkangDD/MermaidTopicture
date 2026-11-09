@@ -4,7 +4,7 @@
   "description": "Mermaid 高清流程图工作室：Web 实时预览 + CLI 批量导出",
   "private": true,
   "engines": {
-    "node": ">=18"
+    "node": ">=22.13.0"
   },
   "scripts": {
     "postinstall": "node -e \"console.log('提示: 运行 npm run studio 打开 Web 工作室，或 npm run batch-generate 批量导出')\"",

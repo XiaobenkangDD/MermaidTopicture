@@ -6,12 +6,10 @@
  * - 自动加载 config.json / puppeteer-config.json
  */
 
-const { spawn } = require('child_process');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-
-const ROOT = path.resolve(__dirname, '..');
+const { ROOT, assertTheme, configWithTheme, resolveMmdc, runMmdc } = require('./mmdc-util');
 
 const DEFAULTS = {
   inputDir: path.join(ROOT, 'examples'),
@@ -119,25 +117,6 @@ function parseArgs(argv) {
   return options;
 }
 
-function resolveMmdc() {
-  const localBin = path.join(
-    ROOT,
-    'node_modules',
-    '.bin',
-    process.platform === 'win32' ? 'mmdc.cmd' : 'mmdc'
-  );
-
-  if (fs.existsSync(localBin)) {
-    return { command: localBin, prefixArgs: [] };
-  }
-
-  // 回退到 npx，避免强制要求全局安装
-  return {
-    command: process.platform === 'win32' ? 'npx.cmd' : 'npx',
-    prefixArgs: ['--yes', '@mermaid-js/mermaid-cli'],
-  };
-}
-
 function ensureDir(dir) {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
@@ -156,9 +135,8 @@ function listMmdFiles(inputDir) {
     .map((file) => path.join(inputDir, file));
 }
 
-function buildCommandArgs(mmdc, options, inputPath, outputPath, format) {
+function buildCommandArgs(options, inputPath, outputPath, format) {
   const args = [
-    ...mmdc.prefixArgs,
     '-i',
     inputPath,
     '-o',
@@ -179,8 +157,8 @@ function buildCommandArgs(mmdc, options, inputPath, outputPath, format) {
     args.push('-s', String(options.scale));
   }
 
-  if (options.configFile && fs.existsSync(options.configFile)) {
-    args.push('-c', options.configFile);
+  if (options.runtimeConfigFile) {
+    args.push('-c', options.runtimeConfigFile);
   }
 
   if (options.puppeteerConfigFile && fs.existsSync(options.puppeteerConfigFile)) {
@@ -188,38 +166,6 @@ function buildCommandArgs(mmdc, options, inputPath, outputPath, format) {
   }
 
   return args;
-}
-
-function runCommand(command, args) {
-  return new Promise((resolve, reject) => {
-    const child = spawn(command, args, {
-      cwd: ROOT,
-      stdio: ['ignore', 'pipe', 'pipe'],
-      env: process.env,
-      shell: process.platform === 'win32',
-    });
-
-    let stdout = '';
-    let stderr = '';
-
-    child.stdout.on('data', (chunk) => {
-      stdout += chunk.toString();
-    });
-    child.stderr.on('data', (chunk) => {
-      stderr += chunk.toString();
-    });
-
-    child.on('error', reject);
-    child.on('close', (code) => {
-      if (code === 0) {
-        resolve({ stdout, stderr });
-        return;
-      }
-
-      const detail = (stderr || stdout || `exit code ${code}`).trim();
-      reject(new Error(detail));
-    });
-  });
 }
 
 async function mapWithConcurrency(items, concurrency, worker) {
@@ -282,6 +228,13 @@ async function main() {
     process.exit(1);
   }
 
+  try {
+    options.theme = assertTheme(options.theme);
+  } catch (error) {
+    console.error(`❌ ${error.message}`);
+    process.exit(1);
+  }
+
   ensureDir(options.outputDir);
 
   let files;
@@ -298,6 +251,9 @@ async function main() {
   }
 
   const mmdc = resolveMmdc();
+  const preparedConfig = configWithTheme(options.configFile, options.theme);
+  options.runtimeConfigFile = preparedConfig ? preparedConfig.file : null;
+  try {
   const jobs = createJobs(files, options);
   const startedAt = Date.now();
 
@@ -320,8 +276,8 @@ async function main() {
   await mapWithConcurrency(jobs, options.concurrency, async (job, index) => {
     const progress = `[${index + 1}/${jobs.length}]`;
     try {
-      const args = buildCommandArgs(mmdc, options, job.inputPath, job.outputPath, job.format);
-      await runCommand(mmdc.command, args);
+      const args = buildCommandArgs(options, job.inputPath, job.outputPath, job.format);
+      await runMmdc(args);
       successCount += 1;
       if (!options.quiet) {
         console.log(`  ✅ ${progress} ${job.label}`);
@@ -353,6 +309,9 @@ async function main() {
       console.log(` - ${failure.label}: ${failure.message.split('\n')[0]}`);
     }
     process.exitCode = 1;
+  }
+  } finally {
+    if (preparedConfig) preparedConfig.cleanup();
   }
 }
 

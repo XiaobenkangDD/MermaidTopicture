@@ -8,9 +8,9 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const { spawn } = require('child_process');
 const { randomUUID } = require('crypto');
 const os = require('os');
+const { assertTheme, configWithTheme, runMmdc } = require('./mmdc-util');
 
 const ROOT = path.resolve(__dirname, '..');
 const WEB_DIR = path.join(ROOT, 'web');
@@ -65,20 +65,45 @@ function readBody(req) {
   });
 }
 
-function resolveMmdc() {
-  const localBin = path.join(
-    ROOT,
-    'node_modules',
-    '.bin',
-    process.platform === 'win32' ? 'mmdc.cmd' : 'mmdc'
-  );
-  if (fs.existsSync(localBin)) {
-    return { command: localBin, prefixArgs: [] };
+const BACKGROUNDS = new Set(['transparent', 'white']);
+
+function assertBackground(value) {
+  const text = String(value || 'transparent');
+  if (BACKGROUNDS.has(text) || /^#[0-9a-fA-F]{6}$/.test(text)) {
+    return text;
   }
-  return {
-    command: process.platform === 'win32' ? 'npx.cmd' : 'npx',
-    prefixArgs: ['--yes', '@mermaid-js/mermaid-cli'],
-  };
+  throw new Error(`不支持的背景色: ${text}`);
+}
+
+function assertSize(value) {
+  const size = Number(value);
+  if (!Number.isInteger(size) || size < 256 || size > 8192) {
+    throw new Error('尺寸需为 256–8192 的整数');
+  }
+  return size;
+}
+
+function assertScale(value) {
+  const scale = Number(value);
+  if (!Number.isFinite(scale) || scale < 1 || scale > 4) {
+    throw new Error('缩放需为 1–4');
+  }
+  return scale;
+}
+
+function assertSameOrigin(req) {
+  const origin = req.headers.origin;
+  if (!origin) return;
+  const allowed = new Set([
+    `http://${HOST}:${PORT}`,
+    `http://127.0.0.1:${PORT}`,
+    `http://localhost:${PORT}`,
+  ]);
+  if (!allowed.has(origin)) {
+    const error = new Error('拒绝跨站导出请求');
+    error.statusCode = 403;
+    throw error;
+  }
 }
 
 function listExamples() {
@@ -106,45 +131,14 @@ function ensureDir(dir) {
   fs.mkdirSync(dir, { recursive: true });
 }
 
-function runMmdc(args) {
-  const mmdc = resolveMmdc();
-  return new Promise((resolve, reject) => {
-    const child = spawn(mmdc.command, [...mmdc.prefixArgs, ...args], {
-      cwd: ROOT,
-      stdio: ['ignore', 'pipe', 'pipe'],
-      shell: process.platform === 'win32',
-      env: process.env,
-    });
-
-    let stdout = '';
-    let stderr = '';
-    child.stdout.on('data', (chunk) => {
-      stdout += chunk.toString();
-    });
-    child.stderr.on('data', (chunk) => {
-      stderr += chunk.toString();
-    });
-    child.on('error', reject);
-    child.on('close', (code) => {
-      if (code === 0) {
-        resolve({ stdout, stderr });
-        return;
-      }
-      reject(new Error((stderr || stdout || `mmdc exit ${code}`).trim()));
-    });
-  });
-}
-
 async function exportDiagram(options) {
-  const {
-    code,
-    format = 'svg',
-    theme = 'default',
-    background = 'transparent',
-    size = 2048,
-    scale = 2,
-    filename = 'diagram',
-  } = options;
+  const format = options.format || 'svg';
+  const theme = assertTheme(options.theme || 'default');
+  const background = assertBackground(options.background || 'transparent');
+  const size = assertSize(options.size || 2048);
+  const scale = assertScale(options.scale || 2);
+  const code = options.code;
+  const filename = options.filename || 'diagram';
 
   const allowed = new Set(['svg', 'png', 'pdf']);
   if (!allowed.has(format)) {
@@ -163,6 +157,7 @@ async function exportDiagram(options) {
 
   fs.writeFileSync(inputPath, code, 'utf8');
 
+  const preparedConfig = configWithTheme(CONFIG_FILE, theme);
   const args = [
     '-i',
     inputPath,
@@ -173,14 +168,14 @@ async function exportDiagram(options) {
     '-b',
     background,
     '--size',
-    String(size || 2048),
+    String(size),
   ];
 
-  if ((format === 'png' || format === 'pdf') && scale) {
+  if (format === 'png' || format === 'pdf') {
     args.push('-s', String(scale));
   }
-  if (fs.existsSync(CONFIG_FILE)) {
-    args.push('-c', CONFIG_FILE);
+  if (preparedConfig) {
+    args.push('-c', preparedConfig.file);
   }
   if (fs.existsSync(PUPPETEER_FILE)) {
     args.push('-p', PUPPETEER_FILE);
@@ -189,6 +184,7 @@ async function exportDiagram(options) {
   try {
     await runMmdc(args);
   } finally {
+    if (preparedConfig) preparedConfig.cleanup();
     fs.rmSync(tempDir, { recursive: true, force: true });
   }
 
@@ -280,6 +276,7 @@ async function handleApi(req, res, url) {
     }
 
     try {
+      assertSameOrigin(req);
       const result = await exportDiagram(payload);
       sendJson(res, 200, {
         ok: true,
@@ -287,7 +284,7 @@ async function handleApi(req, res, url) {
         requestId: randomUUID(),
       });
     } catch (error) {
-      sendJson(res, 500, { error: error.message || '导出失败' });
+      sendJson(res, error.statusCode || 500, { error: error.message || '导出失败' });
     }
     return;
   }

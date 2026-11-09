@@ -1,8 +1,15 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -uo pipefail
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
-cd "$ROOT"
+cd "$ROOT" || exit 1
+
+run_and_return() {
+  if ! "$@"; then
+    echo
+    echo "操作未成功，已返回菜单。"
+  fi
+}
 
 menu() {
   cat <<'EOF'
@@ -27,22 +34,22 @@ while true; do
   read -r -p "请输入选项 (1-8): " choice
   case "$choice" in
     1)
-      npm run studio
+      run_and_return npm run studio
       ;;
     2)
-      npm run generate
+      run_and_return npm run generate
       ;;
     3)
-      npm run generate-png
+      run_and_return npm run generate-png
       ;;
     4)
-      npm run generate-pdf
+      run_and_return npm run generate-pdf
       ;;
     5)
-      npm run generate-all
+      run_and_return npm run generate-all
       ;;
     6)
-      npm run batch-generate
+      run_and_return npm run batch-generate
       ;;
     7)
       echo "正在安装本地依赖..."
@@ -52,7 +59,7 @@ while true; do
         echo "如遇网络问题，可先执行:"
         echo "  export PUPPETEER_DOWNLOAD_HOST=https://cdn.npmmirror.com/binaries/chrome-for-testing"
       fi
-      npm install
+      run_and_return npm install
       ;;
     8)
       echo "再见！"

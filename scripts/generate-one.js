@@ -6,29 +6,9 @@
  *   node scripts/generate-one.js <input.mmd> <output> [--theme default] [--bg transparent] [--size 2048] [--scale 2]
  */
 
-const { spawnSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
-
-const ROOT = path.resolve(__dirname, '..');
-
-function resolveMmdc() {
-  const localBin = path.join(
-    ROOT,
-    'node_modules',
-    '.bin',
-    process.platform === 'win32' ? 'mmdc.cmd' : 'mmdc'
-  );
-
-  if (fs.existsSync(localBin)) {
-    return { command: localBin, prefixArgs: [] };
-  }
-
-  return {
-    command: process.platform === 'win32' ? 'npx.cmd' : 'npx',
-    prefixArgs: ['--yes', '@mermaid-js/mermaid-cli'],
-  };
-}
+const { ROOT, assertTheme, configWithTheme, runMmdc } = require('./mmdc-util');
 
 function parseArgs(argv) {
   const positional = [];
@@ -78,9 +58,9 @@ function main() {
 
   fs.mkdirSync(outDir, { recursive: true });
 
-  const mmdc = resolveMmdc();
+  opts.theme = assertTheme(opts.theme);
+  const preparedConfig = configWithTheme(opts.config, opts.theme);
   const args = [
-    ...mmdc.prefixArgs,
     '-i',
     opts.input,
     '-o',
@@ -99,22 +79,20 @@ function main() {
     args.push('-s', String(opts.scale));
   }
 
-  if (fs.existsSync(opts.config)) {
-    args.push('-c', opts.config);
+  if (preparedConfig) {
+    args.push('-c', preparedConfig.file);
   }
   if (fs.existsSync(opts.puppeteer)) {
     args.push('-p', opts.puppeteer);
   }
 
-  const result = spawnSync(mmdc.command, args, {
-    cwd: ROOT,
-    stdio: 'inherit',
-    shell: process.platform === 'win32',
-    env: process.env,
-  });
-
-  if (result.status !== 0) {
-    process.exit(result.status || 1);
+  try {
+    const result = runMmdc(args, { inherit: true });
+    if (result.status !== 0) {
+      process.exit(result.status || 1);
+    }
+  } finally {
+    if (preparedConfig) preparedConfig.cleanup();
   }
 
   console.log(`✅ 已生成: ${opts.output}`);

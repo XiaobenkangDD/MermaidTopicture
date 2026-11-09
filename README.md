@@ -106,6 +106,7 @@ node scripts/batch-generate.js \
 ├── output/                # 导出结果（gitignore）
 ├── scripts/
 │   ├── studio-server.js   # 本地 Web 服务 + 导出 API
+│   ├── mmdc-util.js       # 本地 mmdc：不经 shell，主题以本次选择为准
 │   ├── batch-generate.js  # 批量并行导出
 │   ├── generate-one.js    # 单文件导出
 │   └── watch-generate.js  # 监听自动导出
@@ -117,7 +118,7 @@ node scripts/batch-generate.js \
 
 ## 配置说明
 
-`config.json` 可调整主题色、中文字体、flowchart / sequence / gantt 间距。  
+`config.json` 可调整主题色、中文字体、flowchart / sequence / gantt 间距。命令行 `-t` 和 Web 工作室里选择的主题会覆盖配置文件中的 `theme`，字体和间距仍沿用该文件。需要 Node.js 22.13 及以上。  
 `puppeteer-config.json` 默认开启 `--no-sandbox`，便于 Linux CI 与容器运行。
 
 常用主题：`default` / `forest` / `dark` / `neutral` / `base`
