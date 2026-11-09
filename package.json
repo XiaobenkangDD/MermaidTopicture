@@ -1,25 +1,37 @@
 {
   "name": "mermaid-flowchart-generator",
-  "version": "1.0.0",
-  "description": "使用 Mermaid CLI 生成高清流程图",
+  "version": "1.2.0",
+  "description": "Mermaid 高清流程图工作室：Web 实时预览 + CLI 批量导出",
+  "private": true,
+  "engines": {
+    "node": ">=22.13.0"
+  },
   "scripts": {
-    "install-cli": "npm install -g @mermaid-js/mermaid-cli",
-    "generate": "mmdc -i ./examples/flowchart.mmd -o ./output/flowchart.svg -t default -b transparent",
-    "generate-png": "mmdc -i ./examples/flowchart.mmd -o ./output/flowchart.png -t default -b white -w 2048",
-    "generate-pdf": "mmdc -i ./examples/flowchart.mmd -o ./output/flowchart.pdf -t default",
+    "postinstall": "node -e \"console.log('提示: 运行 npm run studio 打开 Web 工作室，或 npm run batch-generate 批量导出')\"",
+    "studio": "node scripts/studio-server.js",
+    "start": "node scripts/studio-server.js",
+    "generate": "node scripts/generate-one.js ./examples/flowchart.mmd ./output/flowchart.svg --bg transparent",
+    "generate-png": "node scripts/generate-one.js ./examples/flowchart.mmd ./output/flowchart.png --bg white --size 2048 --scale 2",
+    "generate-pdf": "node scripts/generate-one.js ./examples/flowchart.mmd ./output/flowchart.pdf --bg white --size 2048 --scale 2",
     "generate-all": "npm run generate && npm run generate-png && npm run generate-pdf",
-    "batch-generate": "node scripts/batch-generate.js"
+    "batch-generate": "node scripts/batch-generate.js",
+    "batch-generate:all": "node scripts/batch-generate.js -f svg,png,pdf",
+    "batch-generate:4k": "node scripts/batch-generate.js -f png --size 3840 -s 3",
+    "batch-generate:dark": "node scripts/batch-generate.js -t dark -b transparent",
+    "watch": "node scripts/watch-generate.js",
+    "smoke:studio": "node scripts/smoke-studio.js"
   },
   "keywords": [
     "mermaid",
     "flowchart",
     "diagram",
-    "svg"
+    "svg",
+    "png",
+    "pdf"
   ],
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@mermaid-js/mermaid-cli": "^11.4.1"
+    "@mermaid-js/mermaid-cli": "^12.2.0"
   }
 }
-

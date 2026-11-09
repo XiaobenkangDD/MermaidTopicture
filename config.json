@@ -2,13 +2,13 @@
   "theme": "default",
   "themeVariables": {
     "primaryColor": "#4A90E2",
-    "primaryTextColor": "#fff",
+    "primaryTextColor": "#ffffff",
     "primaryBorderColor": "#357ABD",
     "lineColor": "#666666",
     "secondaryColor": "#52C41A",
     "tertiaryColor": "#ffffff",
     "fontSize": "16px",
-    "fontFamily": "Microsoft YaHei, SimHei, Arial, sans-serif"
+    "fontFamily": "Microsoft YaHei, Noto Sans CJK SC, WenQuanYi Micro Hei, SimHei, Arial, sans-serif"
   },
   "flowchart": {
     "curve": "basis",
@@ -16,6 +16,7 @@
     "nodeSpacing": 50,
     "rankSpacing": 50,
     "diagramPadding": 20,
+    "htmlLabels": true,
     "useMaxWidth": true
   },
   "sequence": {
@@ -27,7 +28,8 @@
     "boxMargin": 10,
     "boxTextMargin": 5,
     "noteMargin": 10,
-    "messageMargin": 35
+    "messageMargin": 35,
+    "useMaxWidth": true
   },
   "gantt": {
     "titleTopMargin": 25,
@@ -37,7 +39,7 @@
     "leftPadding": 75,
     "gridLineStartPadding": 35,
     "fontSize": 11,
-    "numberSectionStyles": 4
+    "numberSectionStyles": 4,
+    "useMaxWidth": true
   }
 }
-
